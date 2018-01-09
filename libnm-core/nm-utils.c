@@ -5429,6 +5429,7 @@ nm_utils_is_json_object (const char *str, GError **error)
 {
 #if WITH_JSON_VALIDATION
 	nm_auto_decref_json json_t *json = NULL;
+	const NMJsonVt *vt;
 	json_error_t jerror;
 
 	g_return_val_if_fail (!error || !*error, FALSE);
@@ -5441,10 +5442,10 @@ nm_utils_is_json_object (const char *str, GError **error)
 		return FALSE;
 	}
 
-	if (!nm_json_init (NULL))
+	if (!nm_json_init (&vt))
 		return _nm_utils_is_json_object_no_validation (str, error);
 
-	json = json_loads (str, JSON_REJECT_DUPLICATES, &jerror);
+	json = vt->nm_json_loads (str, JSON_REJECT_DUPLICATES, &jerror);
 	if (!json) {
 		g_set_error (error,
 		             NM_CONNECTION_ERROR,
@@ -5457,7 +5458,7 @@ nm_utils_is_json_object (const char *str, GError **error)
 
 	/* valid JSON (depending on the definition) can also be a literal.
 	 * Here we only allow objects. */
-	if (!json_is_object (json)) {
+	if (!nm_json_is_object (json)) {
 		g_set_error_literal (error,
 		                     NM_CONNECTION_ERROR,
 		                     NM_CONNECTION_ERROR_INVALID_PROPERTY,
