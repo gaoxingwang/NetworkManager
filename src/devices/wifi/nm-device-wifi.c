@@ -2574,6 +2574,9 @@ supplicant_iface_notify_current_bss (NMSupplicantInterface *iface,
 		       new_bssid ?: "(none)",
 		       (new_ssid_s = _nm_utils_ssid_to_string (new_ssid)));
 
+		if (new_bssid)
+			nm_device_update_dynamic_ip_setup (NM_DEVICE (self));
+
 		set_current_ap (self, new_ap, TRUE);
 	}
 }
