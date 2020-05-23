@@ -1700,6 +1700,14 @@ libnm_1_26_0 {
 global:
 	nm_ethtool_optname_is_coalesce;
 	nm_ethtool_optname_is_ring;
+	nm_keyfile_handler_data_fail_with_error;
+	nm_keyfile_handler_data_get_context;
+	nm_keyfile_handler_data_warn_get;
+	nm_keyfile_handler_flags_get_type;
+	nm_keyfile_handler_type_get_type;
+	nm_keyfile_read;
+	nm_keyfile_warn_severity_get_type;
+	nm_keyfile_write;
 	nm_setting_bridge_get_multicast_hash_max;
 	nm_setting_bridge_get_multicast_last_member_count;
 	nm_setting_bridge_get_multicast_last_member_interval;
