@@ -70,6 +70,7 @@ gboolean    _nm_utils_hwaddr_link_local_valid (const char *mac);
 void        _nm_utils_format_variant_attributes_full (GString *str,
                                                       const NMUtilsNamedValue *values,
                                                       guint num_values,
+                                                      const NMVariantAttributeSpec *const *spec,
                                                       char attr_separator,
                                                       char key_value_separator);
 
@@ -81,4 +82,10 @@ gboolean    _nm_utils_bridge_vlan_verify_list (GPtrArray *vlans,
                                                const char *setting,
                                                const char *property);
 
+
+char *
+_nm_utils_format_variant_attributes (GHashTable *attributes,
+                                     const NMVariantAttributeSpec *const *spec,
+                                     char attr_separator,
+                                     char key_value_separator);
 #endif

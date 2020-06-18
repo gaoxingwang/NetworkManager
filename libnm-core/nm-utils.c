@@ -2893,7 +2893,7 @@ nm_utils_sriov_vf_to_str (const NMSriovVF *vf, gboolean omit_index, GError **err
 	if (num_attrs > 0) {
 		if (!omit_index)
 			g_string_append_c (str, ' ');
-		_nm_utils_format_variant_attributes_full (str, values, num_attrs, ' ', '=');
+		_nm_utils_format_variant_attributes_full (str, values, num_attrs, NULL, ' ', '=');
 	}
 
 	vlan_ids = nm_sriov_vf_get_vlan_ids (vf, &num_vlans);
@@ -5755,6 +5755,7 @@ void
 _nm_utils_format_variant_attributes_full (GString *str,
                                           const NMUtilsNamedValue *values,
                                           guint num_values,
+                                          const NMVariantAttributeSpec *const *spec,
                                           char attr_separator,
                                           char key_value_separator)
 {
@@ -5764,11 +5765,23 @@ _nm_utils_format_variant_attributes_full (GString *str,
 	char buf[64];
 	char sep = 0;
 	guint i;
+	const NMVariantAttributeSpec * const *s;
 
 	for (i = 0; i < num_values; i++) {
 		name = values[i].name;
 		variant = (GVariant *) values[i].value_ptr;
 		value = NULL;
+		s = NULL;
+
+		if (spec) {
+			for (s = spec; *s; s++) {
+				if (nm_streq0 ((*s)->name, name))
+					break;
+			}
+
+			if (!*s)
+				continue;
+		}
 
 		if (g_variant_is_of_type (variant, G_VARIANT_TYPE_UINT32))
 			value = nm_sprintf_buf (buf, "%u", g_variant_get_uint32 (variant));
@@ -5806,6 +5819,34 @@ _nm_utils_format_variant_attributes_full (GString *str,
 	}
 }
 
+char *
+_nm_utils_format_variant_attributes (GHashTable *attributes,
+                                     const NMVariantAttributeSpec *const *spec,
+                                     char attr_separator,
+                                     char key_value_separator)
+{
+	GString *str = NULL;
+	gs_free NMUtilsNamedValue *values = NULL;
+	guint len;
+
+	g_return_val_if_fail (attr_separator, NULL);
+	g_return_val_if_fail (key_value_separator, NULL);
+
+	if (!attributes || !g_hash_table_size (attributes))
+		return NULL;
+
+	values = nm_utils_named_values_from_str_dict (attributes, &len);
+
+	str = g_string_new ("");
+	_nm_utils_format_variant_attributes_full (str,
+	                                          values,
+	                                          len,
+	                                          spec,
+	                                          attr_separator,
+	                                          key_value_separator);
+	return g_string_free (str, FALSE);
+}
+
 /*
  * nm_utils_format_variant_attributes:
  * @attributes: (element-type utf8 GVariant): a #GHashTable mapping attribute names to #GVariant values
@@ -5824,25 +5865,7 @@ nm_utils_format_variant_attributes (GHashTable *attributes,
                                     char attr_separator,
                                     char key_value_separator)
 {
-	GString *str = NULL;
-	gs_free NMUtilsNamedValue *values = NULL;
-	guint len;
-
-	g_return_val_if_fail (attr_separator, NULL);
-	g_return_val_if_fail (key_value_separator, NULL);
-
-	if (!attributes || !g_hash_table_size (attributes))
-		return NULL;
-
-	values = nm_utils_named_values_from_str_dict (attributes, &len);
-
-	str = g_string_new ("");
-	_nm_utils_format_variant_attributes_full (str,
-	                                          values,
-	                                          len,
-	                                          attr_separator,
-	                                          key_value_separator);
-	return g_string_free (str, FALSE);
+	return _nm_utils_format_variant_attributes (attributes, NULL, attr_separator, key_value_separator);
 }
 
 /*****************************************************************************/
