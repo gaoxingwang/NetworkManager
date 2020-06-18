@@ -16,7 +16,7 @@ typedef struct {
 	GMainContext *context;
 	CURLM *mhandle;
 	GSource *mhandle_source_timeout;
-	GSource *mhandle_source_socket;
+	GHashTable *source_sockets_hashtable;
 	struct curl_slist *custom_headers;
 } NMHttpClientPrivate;
 
@@ -644,12 +644,13 @@ _mhandle_socket_cb (int fd,
 static int
 _mhandle_socketfunction_cb (CURL *e_handle, curl_socket_t fd, int what, void *user_data, void *socketp)
 {
+	GSource *source_socket;
 	NMHttpClient *self = user_data;
 	NMHttpClientPrivate *priv = NM_HTTP_CLIENT_GET_PRIVATE (self);
 
 	(void) _NM_ENSURE_TYPE (int, fd);
 
-	nm_clear_g_source_inst (&priv->mhandle_source_socket);
+	g_hash_table_remove (priv->source_sockets_hashtable, GINT_TO_POINTER (fd));
 
 	if (what != CURL_POLL_REMOVE) {
 		GIOCondition condition = 0;
@@ -664,13 +665,17 @@ _mhandle_socketfunction_cb (CURL *e_handle, curl_socket_t fd, int what, void *us
 			condition = 0;
 
 		if (condition) {
-			priv->mhandle_source_socket = nm_g_unix_fd_source_new (fd,
-			                                                       condition,
-			                                                       G_PRIORITY_DEFAULT,
-			                                                       _mhandle_socket_cb,
-			                                                       self,
+			source_socket = nm_g_unix_fd_source_new (fd,
+			                                         condition,
+			                                         G_PRIORITY_DEFAULT,
+			                                         _mhandle_socket_cb,
+			                                         self,
 			                                                       NULL);
-			g_source_attach (priv->mhandle_source_socket, priv->context);
+			g_source_attach (source_socket, priv->context);
+
+			g_hash_table_insert (priv->source_sockets_hashtable,
+			                     GINT_TO_POINTER (fd),
+			                     source_socket);
 		}
 	}
 
@@ -710,6 +715,10 @@ nm_http_client_init (NMHttpClient *self)
 	NMHttpClientPrivate *priv = NM_HTTP_CLIENT_GET_PRIVATE (self);
 
 	priv->custom_headers = NULL;
+	priv->source_sockets_hashtable = g_hash_table_new_full (nm_direct_hash,
+	                                                        NULL,
+	                                                        NULL,
+	                                                        (GDestroyNotify) nm_g_source_destroy_and_unref);
 }
 
 static void
@@ -747,9 +756,9 @@ dispose (GObject *object)
 
 	nm_clear_pointer (&priv->mhandle, curl_multi_cleanup);
 	nm_clear_pointer (&priv->custom_headers, curl_slist_free_all);
+	nm_clear_pointer (&priv->source_sockets_hashtable, g_hash_table_unref);
 
 	nm_clear_g_source_inst (&priv->mhandle_source_timeout);
-	nm_clear_g_source_inst (&priv->mhandle_source_socket);
 
 	G_OBJECT_CLASS (nm_http_client_parent_class)->dispose (object);
 }
