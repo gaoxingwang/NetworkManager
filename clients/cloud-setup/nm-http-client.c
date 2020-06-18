@@ -17,6 +17,7 @@ typedef struct {
 	CURLM *mhandle;
 	GSource *mhandle_source_timeout;
 	GSource *mhandle_source_socket;
+	struct curl_slist *custom_headers;
 } NMHttpClientPrivate;
 
 struct _NMHttpClient {
@@ -297,6 +298,8 @@ nm_http_client_get (NMHttpClient *self,
 	}
 
 	curl_easy_setopt (edata->ehandle, CURLOPT_URL, url);
+	if (priv->custom_headers)
+		curl_easy_setopt (edata->ehandle, CURLOPT_HTTPHEADER, priv->custom_headers);
 
 	curl_easy_setopt (edata->ehandle, CURLOPT_WRITEFUNCTION, _get_writefunction_cb);
 	curl_easy_setopt (edata->ehandle, CURLOPT_WRITEDATA, edata);
@@ -558,6 +561,32 @@ nm_http_client_poll_get_finish (NMHttpClient *self,
 	return TRUE;
 }
 
+gboolean
+nm_http_client_add_header (NMHttpClient *self,
+                           const char *header)
+{
+	NMHttpClientPrivate *priv = NM_HTTP_CLIENT_GET_PRIVATE (self);
+	struct curl_slist *tmp;
+
+	tmp = curl_slist_append (priv->custom_headers,
+	                         header);
+	if (!tmp) {
+		curl_slist_free_all (tmp);
+		return FALSE;
+	}
+	priv->custom_headers = tmp;
+	return TRUE;
+}
+
+void
+nm_http_client_clear_headers (NMHttpClient *self)
+{
+	NMHttpClientPrivate *priv = NM_HTTP_CLIENT_GET_PRIVATE (self);
+
+	curl_slist_free_all (priv->custom_headers);
+	priv->custom_headers = NULL;
+}
+
 /*****************************************************************************/
 
 static void
@@ -678,6 +707,9 @@ _mhandle_timerfunction_cb (CURLM *multi, long timeout_msec, void *user_data)
 static void
 nm_http_client_init (NMHttpClient *self)
 {
+	NMHttpClientPrivate *priv = NM_HTTP_CLIENT_GET_PRIVATE (self);
+
+	priv->custom_headers = NULL;
 }
 
 static void
@@ -714,6 +746,7 @@ dispose (GObject *object)
 	NMHttpClientPrivate *priv = NM_HTTP_CLIENT_GET_PRIVATE (self);
 
 	nm_clear_pointer (&priv->mhandle, curl_multi_cleanup);
+	nm_clear_pointer (&priv->custom_headers, curl_slist_free_all);
 
 	nm_clear_g_source_inst (&priv->mhandle_source_timeout);
 	nm_clear_g_source_inst (&priv->mhandle_source_socket);

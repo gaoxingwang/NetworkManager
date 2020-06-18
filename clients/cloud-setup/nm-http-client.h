@@ -62,6 +62,11 @@ gboolean nm_http_client_poll_get_finish (NMHttpClient *self,
                                          GBytes **out_response_data,
                                          GError **error);
 
+gboolean nm_http_client_add_header (NMHttpClient *self,
+                                    const char *header);
+
+void nm_http_client_clear_headers (NMHttpClient *self);
+
 /*****************************************************************************/
 
 #endif /* __NM_HTTP_CLIENT_C__ */
