@@ -631,10 +631,9 @@ nm_utils_escaped_tokens_escape (const char *str,
 	                                            out_to_free);
 }
 
-static inline GString *
-nm_utils_escaped_tokens_escape_gstr_assert (const char *str,
-                                            const char *delimiters,
-                                            GString *gstring)
+static inline const char *
+nm_utils_escaped_tokens_escape_unnecessary (const char *str,
+                                            const char *delimiters)
 {
 #if NM_MORE_ASSERTS > 0
 
@@ -647,7 +646,6 @@ nm_utils_escaped_tokens_escape_gstr_assert (const char *str,
 	 * whitespace that requires escaping. */
 
 	nm_assert (str);
-	nm_assert (gstring);
 	nm_assert (delimiters);
 
 	{
@@ -660,8 +658,16 @@ nm_utils_escaped_tokens_escape_gstr_assert (const char *str,
 	}
 #endif
 
-	g_string_append (gstring, str);
-	return gstring;
+	return str;
+}
+
+static inline void
+nm_utils_escaped_tokens_escape_gstr_assert (const char *str,
+                                            const char *delimiters,
+                                            GString *gstring)
+{
+	g_string_append (gstring,
+	                 nm_utils_escaped_tokens_escape_unnecessary (str, delimiters));
 }
 
 static inline GString *
