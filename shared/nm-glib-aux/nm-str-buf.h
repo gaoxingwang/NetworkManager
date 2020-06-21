@@ -283,6 +283,30 @@ nm_str_buf_append_required_delimiter (NMStrBuf *strbuf,
 
 /*****************************************************************************/
 
+static inline void
+nm_utils_escaped_tokens_escape_strbuf (const char *str,
+                                       const char *delimiters,
+                                       NMStrBuf *strbuf)
+{
+	gs_free char *str_to_free = NULL;
+
+	nm_assert (str);
+
+	nm_str_buf_append (strbuf,
+	                   nm_utils_escaped_tokens_escape (str, delimiters, &str_to_free));
+}
+
+static inline void
+nm_utils_escaped_tokens_escape_strbuf_assert (const char *str,
+                                              const char *delimiters,
+                                              NMStrBuf *strbuf)
+{
+	nm_str_buf_append (strbuf,
+	                   nm_utils_escaped_tokens_escape_unnecessary (str, delimiters));
+}
+
+/*****************************************************************************/
+
 static inline gboolean
 nm_str_buf_is_initalized (NMStrBuf *strbuf)
 {
