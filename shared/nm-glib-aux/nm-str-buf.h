@@ -207,6 +207,25 @@ nm_str_buf_append_len (NMStrBuf *strbuf,
 	}
 }
 
+static inline char *
+nm_str_buf_append_len0 (NMStrBuf *strbuf,
+                        const char *str,
+                        gsize len)
+{
+	_nm_str_buf_assert (strbuf);
+
+	/* this is basically like nm_str_buf_append_len() and
+	 * nm_str_buf_get_str() in one. */
+
+	nm_str_buf_maybe_expand (strbuf, len + 1u, FALSE);
+	if (len > 0) {
+		memcpy (&strbuf->_priv_str[strbuf->_priv_len], str, len);
+		strbuf->_priv_len += len;
+	}
+	strbuf->_priv_str[strbuf->_priv_len] = '\0';
+	return strbuf->_priv_str;
+}
+
 static inline void
 nm_str_buf_append (NMStrBuf *strbuf,
                    const char *str)
@@ -214,6 +233,15 @@ nm_str_buf_append (NMStrBuf *strbuf,
 	nm_assert (str);
 
 	nm_str_buf_append_len (strbuf, str, strlen (str));
+}
+
+static inline char *
+nm_str_buf_append0 (NMStrBuf *strbuf,
+                    const char *str)
+{
+	nm_assert (str);
+
+	return nm_str_buf_append_len0 (strbuf, str, strlen (str));
 }
 
 void nm_str_buf_append_printf (NMStrBuf *strbuf,
@@ -263,7 +291,7 @@ nm_str_buf_is_initalized (NMStrBuf *strbuf)
  *   NUL character is always present after "strbuf->len" characters.
  *   If currently no buffer is allocated, this will return %NULL.
  */
-static inline const char *
+static inline char *
 nm_str_buf_get_str (NMStrBuf *strbuf)
 {
 	_nm_str_buf_assert (strbuf);
