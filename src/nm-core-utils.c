@@ -1698,19 +1698,44 @@ nm_match_spec_join (GSList *specs)
 	return g_string_free (str, FALSE);
 }
 
+static void
+_pattern_parse (const char *input,
+                const char **out_pattern,
+                gboolean *out_inverted)
+{
+	gboolean inverted = FALSE;
+
+	if (input[0] == '!') {
+		input++;
+		inverted = TRUE;
+	}
+
+	/* a leading backslash escapes the first character of the pattern. */
+	if (input[0] == '\\')
+		input++;
+
+	NM_SET_OUT (out_pattern, input);
+	NM_SET_OUT (out_inverted, inverted);
+}
+
 gboolean
 nm_wildcard_match_check (const char *str,
                          const char *const *patterns,
                          guint num_patterns)
 {
-	gsize i, neg = 0;
+	gboolean inverted;
+	const char *p;
+	guint neg;
+	guint i;
 
+	neg = 0;
 	for (i = 0; i < num_patterns; i++) {
-		if (patterns[i][0] == '!') {
+		_pattern_parse (patterns[i], &p, &inverted);
+		if (inverted) {
 			neg++;
 			if (!str)
 				continue;
-			if (!fnmatch (patterns[i] + 1, str, 0))
+			if (!fnmatch (p, str, 0))
 				return FALSE;
 		}
 	}
@@ -1720,8 +1745,9 @@ nm_wildcard_match_check (const char *str,
 
 	if (str) {
 		for (i = 0; i < num_patterns; i++) {
-			if (   patterns[i][0] != '!'
-			    && !fnmatch (patterns[i], str, 0))
+			_pattern_parse (patterns[i], &p, &inverted);
+			if (   !inverted
+			    && !fnmatch (p, str, 0))
 				return TRUE;
 		}
 	}

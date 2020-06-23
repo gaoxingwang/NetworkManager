@@ -968,7 +968,7 @@ test_wildcard_match (void)
 	do_test_wildcard_match ("b",      TRUE,  "!!a");
 	do_test_wildcard_match ("!a",     FALSE, "!!a");
 
-	do_test_wildcard_match ("\\",     TRUE,  "\\\\");
+	do_test_wildcard_match ("\\",     TRUE,  "\\\\\\");
 	do_test_wildcard_match ("\\\\",   FALSE, "\\\\");
 	do_test_wildcard_match ("",       FALSE, "\\\\");
 

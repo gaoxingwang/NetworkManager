@@ -817,13 +817,18 @@ nm_setting_match_class_init (NMSettingMatchClass *klass)
 	 * NMSettingMatch:interface-name
 	 *
 	 * A list of interface names to match. Each element is a shell wildcard
-	 * pattern.  When an element is prefixed with exclamation mark (!) the
-	 * condition is inverted.
+	 * pattern.
 	 *
-	 * A candidate interface name is considered matching when both these
-	 * conditions are satisfied: (a) any of the elements not prefixed with '!'
-	 * matches or there aren't such elements; (b) none of the elements
-	 * prefixed with '!' match.
+	 * A pattern can be prefixed by exclamation mark (!) to indicate
+	 * that there must be no match. That means if any pattern with exclamation
+	 * mark matches, then the condition fails.
+	 *
+	 * Otherwise, if no inverted pattern matches, then the condition is satisfied
+	 * if at least one non-inverted pattern matches or no such pattern exists.
+	 *
+	 * A leading backslash (at the beginning of the pattern or right after the
+	 * exclamation mark) indicates to take the remainder literally. It can be used
+	 * to escape special characters at the beginning.
 	 *
 	 * Since: 1.14
 	 **/
@@ -858,11 +863,17 @@ nm_setting_match_class_init (NMSettingMatchClass *klass)
 	 * NMSettingMatch:driver
 	 *
 	 * A list of driver names to match. Each element is a shell wildcard pattern.
-	 * When an element is prefixed with exclamation mark (!) the condition is
-	 * inverted. A candidate driver name is considered matching when both these
-	 * conditions are satisfied: (a) any of the elements not prefixed with '!'
-	 * matches or there aren't such elements; (b) none of the elements prefixed
-	 * with '!' match.
+	 *
+	 * A pattern can be prefixed by exclamation mark (!) to indicate
+	 * that there must be no match. That means if any pattern with exclamation
+	 * mark matches, then the condition fails.
+	 *
+	 * Otherwise, if no inverted pattern matches, then the condition is satisfied
+	 * if at least one non-inverted pattern matches or no such pattern exists.
+	 *
+	 * A leading backslash (at the beginning of the pattern or right after the
+	 * exclamation mark) indicates to take the remainder literally. It can be used
+	 * to escape special characters at the beginning.
 	 *
 	 * Since: 1.26
 	 **/
@@ -891,14 +902,18 @@ nm_setting_match_class_init (NMSettingMatchClass *klass)
 	 * property exported by NetworkManager ("nmcli -f general.path device
 	 * show $dev").
 	 *
-	 * Each element of the list is a shell wildcard pattern. When an
-	 * element is prefixed with exclamation mark (!) the condition is
-	 * inverted.
+	 * Each element of the list is a shell wildcard pattern.
 	 *
-	 * A candidate path is considered matching when both these
-	 * conditions are satisfied: (a) any of the elements not prefixed with '!'
-	 * matches or there aren't such elements; (b) none of the elements
-	 * prefixed with '!' match.
+	 * A pattern can be prefixed by exclamation mark (!) to indicate
+	 * that there must be no match. That means if any pattern with exclamation
+	 * mark matches, then the condition fails.
+	 *
+	 * Otherwise, if no inverted pattern matches, then the condition is satisfied
+	 * if at least one non-inverted pattern matches or no such pattern exists.
+	 *
+	 * A leading backslash (at the beginning of the pattern or right after the
+	 * exclamation mark) indicates to take the remainder literally. It can be used
+	 * to escape special characters at the beginning.
 	 *
 	 * Since: 1.26
 	 **/
